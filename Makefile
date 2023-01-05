@@ -20,7 +20,7 @@ sales-api:
 
 # Running from within k8s/kind
 
-KIND_CLUSTER := third-starter-cluster
+KIND_CLUSTER := sales-starter-cluster
 
 kind-up:
 	kind create cluster \
@@ -32,11 +32,30 @@ kind-up:
 kind-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 
+kind-load:
+	kind load docker-image sales-api-amd64:$(VERSION) --name $(KIND_CLUSTER)
+
+kind-apply:
+	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
+
 kind-status:
 	kubectl get nodes -o wide
 	kubectl get svc -o wide
 	kubectl get pods -o wide --watch --all-namespaces
 
+kind-status-sales:
+	kubectl get pods -o wide --watch
+
+kind-logs:
+	kubectl logs -l app=sales --all-containers=true -f --tail=100
+
+
+kind-restart:
+	kubectl rollout restart deployment sales-pod
+
+kind-update: all kind-load kind-restart
+
+kind-update-apply: all kind-load kind-apply
 
 
 # Modules support
