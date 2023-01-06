@@ -14,9 +14,9 @@ import (
 var build = "develop"
 
 func main() {
-	// service/GOMAXPROCS
-	// service/Set the correct number of threads for the service
-	// service/based on what is available either by the machine or quotas.
+	// GOMAXPROCS
+	// Set the correct number of threads for the service
+	// based on what is available either by the machine or quotas.
 	if _, err := maxprocs.Set(); err != nil {
 		fmt.Printf("maxprocs: %w", err)
 		os.Exit(1)

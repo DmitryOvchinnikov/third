@@ -23,4 +23,4 @@ spec:
       containers:
       # sales-api container configuration
       - name: sales-api
-        image: sales-api-amd64:1.0
+        image: sales-api-image
