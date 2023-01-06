@@ -26,6 +26,7 @@ func APIMux(cfg APIMuxConfig) *web.App {
 	app := web.NewApp(
 		cfg.Shutdown,
 		mid.Logger(cfg.Log),
+		mid.Errors(cfg.Log),
 	)
 
 	tgh := testgrp.Handlers{Log: cfg.Log}
