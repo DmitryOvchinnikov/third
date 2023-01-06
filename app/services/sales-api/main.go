@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers"
 	"github.com/dmitryovchinnikov/third/foundation/logger"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
@@ -92,6 +93,8 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("parsing config: %w", err)
 	}
 
+	//Shutdown(context.Background())
+
 	/*
 		App Starting
 	*/
@@ -106,6 +109,26 @@ func run(log *zap.SugaredLogger) error {
 	log.Infow("startup", "config", out)
 
 	expvar.NewString("build").Set(build)
+
+	/*
+		Start Debug Service
+	*/
+
+	log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
+
+	// The Debug function returns a mux to listen and serve on for all the debug
+	// related endpoints. This includes the standard library endpoints.
+
+	// Construct the mux for the debug calls.
+	debugMux := handlers.DebugStandardLibraryMux()
+
+	// Start the service listening for debug requests.
+	// Not concerned with shutting this down with load shedding.
+	go func() {
+		if err := http.ListenAndServe(cfg.Web.DebugHost, debugMux); err != nil {
+			log.Errorw("shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
+		}
+	}()
 
 	/*
 		Start API Service
