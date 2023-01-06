@@ -93,8 +93,6 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("parsing config: %w", err)
 	}
 
-	//Shutdown(context.Background())
-
 	/*
 		App Starting
 	*/
@@ -144,6 +142,7 @@ func run(log *zap.SugaredLogger) error {
 	// Construct a server to service the requests against the mux.
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
+		Handler:      nil,
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
