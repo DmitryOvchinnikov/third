@@ -46,7 +46,7 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Handle sets a handler function for a given HTTP method and path pair
 // to the application server mux.
-func (a *App) Handle(method string, path string, handler Handler) {
+func (a *App) Handle(method string, group string, path string, handler Handler) {
 
 	// The function to execute for each request.
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -63,5 +63,8 @@ func (a *App) Handle(method string, path string, handler Handler) {
 	}
 
 	finalPath := path
+	if group != "" {
+		finalPath = "/" + group + path
+	}
 	a.mux.Handle(method, finalPath, h)
 }
