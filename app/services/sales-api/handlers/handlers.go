@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/debug/checkgrp"
 	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/testgrp"
+	"github.com/dmitryovchinnikov/third/business/web/v1/mid"
 	"github.com/dmitryovchinnikov/third/foundation/web"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,13 @@ type APIMuxConfig struct {
 // APIMux constructs a http.Handler with all application routes defined.
 func APIMux(cfg APIMuxConfig) *web.App {
 
-	app := web.NewApp(cfg.Shutdown)
+	app := web.NewApp(
+		cfg.Shutdown,
+		mid.Logger(cfg.Log),
+		mid.Errors(cfg.Log),
+		mid.Metrics(),
+		mid.Panics(),
+	)
 
 	tgh := testgrp.Handlers{Log: cfg.Log}
 	app.Handle(http.MethodGet, "v1", "/test", tgh.Test)
