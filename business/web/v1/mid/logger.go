@@ -9,7 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// Logger ...
+// Logger writes some information about the request to the logs in the
+// format: TraceID : (200) GET /foo -> IP ADDR (latency)
 func Logger(log *zap.SugaredLogger) web.Middleware {
 
 	// This is the actual middleware function to be executed.
@@ -18,16 +19,17 @@ func Logger(log *zap.SugaredLogger) web.Middleware {
 		// Create the handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			traceID := "00000000-0000-0000-0000-000000000000"
-			statusCode := http.StatusOK
-			now := time.Now()
+			v, err := web.GetValues(ctx)
+			if err != nil {
+				return err
+			}
 
-			log.Infow("request started", "traceid", traceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
+			log.Infow("request started", "traceid", v.TraceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
 
 			// Call the next handler.
-			err := handler(ctx, w, r)
+			err = handler(ctx, w, r)
 
-			log.Infow("request completed", "traceid", traceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr, "statuscode", statusCode, "since", now)
+			log.Infow("request completed", "traceid", v.TraceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr, "statuscode", v.StatusCode, "since", time.Since(v.Now))
 
 			// Return the error, so it can be handled further up the chain.
 			return err
