@@ -26,4 +26,6 @@ vendor/
 .idea
 .idea/*
 
+./*.pem
+
 
