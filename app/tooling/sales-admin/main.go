@@ -4,7 +4,8 @@ package main
 import "github.com/dmitryovchinnikov/third/app/tooling/sales-admin/commands"
 
 func main() {
-	commands.GenKey()
+	//commands.GenKey()
+	commands.GenToken()
 }
 
 //// build is the git version of this program.
