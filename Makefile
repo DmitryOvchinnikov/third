@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # Testing running system
 
 # For testing a simple query on the system. Don't forget to `make seed` first.
-# curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token
+# curl --user "sales-admin@example.com:gophers" http://localhost:3000/v1/users/token
 # export TOKEN="COPY TOKEN STRING FROM LAST CALL"
 # curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users/1/2
 #
@@ -35,8 +35,12 @@ SHELL := /bin/bash
 # Launch zipkin.
 # http://localhost:9411/zipkin/
 
+
 run:
-	go run app/services/sales-api/main.go | go run ./app/tooling/logfmt/main.go
+	go run ./app/services/sales-api/main.go | go run ./app/tooling/logfmt/main.go
+
+admin:
+	go run ./app/tooling/sales-admin/main.go
 
 
 # Building containers
