@@ -100,7 +100,14 @@ kind-describe:
 	kubectl describe pod -l app=sales
 
 
-# Modules support
+# Running tests within the local computer
+
+test:
+	go test ./... -count=1
+	staticcheck -checks=all ./...
+
+
+# Module support
 
 tidy:
 	go mod tidy -compat=1.17

@@ -8,7 +8,8 @@ import (
 	"os"
 
 	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/debug/checkgrp"
-	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/testgrp"
+	v1 "github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1"
+	"github.com/dmitryovchinnikov/third/business/sys/auth"
 	"github.com/dmitryovchinnikov/third/business/web/v1/mid"
 	"github.com/dmitryovchinnikov/third/foundation/web"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ import (
 type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
+	Auth     *auth.Auth
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -31,8 +33,11 @@ func APIMux(cfg APIMuxConfig) *web.App {
 		mid.Panics(),
 	)
 
-	tgh := testgrp.Handlers{Log: cfg.Log}
-	app.Handle(http.MethodGet, "v1", "/test", tgh.Test)
+	// Load the v1 routes.
+	v1.Routes(app, v1.Config{
+		Log:  cfg.Log,
+		Auth: cfg.Auth,
+	})
 
 	return app
 }
