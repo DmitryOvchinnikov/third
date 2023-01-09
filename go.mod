@@ -10,6 +10,8 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/google/uuid v1.3.0
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/lib/pq v1.2.0
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/zap v1.24.0
 )

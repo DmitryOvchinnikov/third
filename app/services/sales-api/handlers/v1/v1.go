@@ -9,6 +9,7 @@ import (
 	"github.com/dmitryovchinnikov/third/business/sys/auth"
 	"github.com/dmitryovchinnikov/third/business/web/v1/mid"
 	"github.com/dmitryovchinnikov/third/foundation/web"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +17,7 @@ import (
 type Config struct {
 	Log  *zap.SugaredLogger
 	Auth *auth.Auth
-	//DB   *sqlx.DB
+	DB   *sqlx.DB
 }
 
 // Routes binds all the version 1 routes.
