@@ -5,7 +5,8 @@ import "github.com/dmitryovchinnikov/third/app/tooling/sales-admin/commands"
 
 func main() {
 	//commands.GenKey()
-	commands.GenToken()
+	//commands.GenToken()
+	commands.Migrate()
 }
 
 //// build is the git version of this program.

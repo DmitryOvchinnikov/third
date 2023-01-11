@@ -12,19 +12,16 @@ import (
 
 	"github.com/dmitryovchinnikov/third/foundation/web"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	_ "github.com/lib/pq" // calls init function.
+	_ "github.com/lib/pq" // Calls init function.
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
 
-// lib/pq errorCodeNames
-// https://github.com/lib/pq/blob/master/error.go#L178
-const uniqueViolation = "23505"
-
 // Set of error variables for CRUD operations.
 var (
-	ErrDBNotFound        = errors.New("not found")
-	ErrDBDuplicatedEntry = errors.New("duplicated entry")
+	// ErrDBNotFound ...
+	ErrDBNotFound = errors.New("not found")
 )
 
 // Config is the required properties to use the database.
@@ -67,8 +64,8 @@ func Open(cfg Config) (*sqlx.DB, error) {
 	return db, nil
 }
 
-// StatusCheck returns nil if it can successfully talk to the database.
-// It returns a non-nil error otherwise.
+// StatusCheck returns nil if it can successfully talk to the database. It
+// returns a non-nil error otherwise.
 func StatusCheck(ctx context.Context, db *sqlx.DB) error {
 
 	// First check we can ping the database.
@@ -96,18 +93,66 @@ func StatusCheck(ctx context.Context, db *sqlx.DB) error {
 	return db.QueryRowContext(ctx, q).Scan(&tmp)
 }
 
+// Transactor interface needed to begin transaction.
+type Transactor interface {
+	Beginx() (*sqlx.Tx, error)
+}
+
+// WithinTran runs passed function and do commit/rollback at the end.
+func WithinTran(ctx context.Context, log *zap.SugaredLogger, db Transactor, fn func(sqlx.ExtContext) error) error {
+	traceID := web.GetTraceID(ctx)
+
+	// Begin the transaction.
+	log.Infow("begin tran", "traceid", traceID)
+	tx, err := db.Beginx()
+	if err != nil {
+		return fmt.Errorf("begin tran: %w", err)
+	}
+
+	// Mark to the defer function a rollback is required.
+	mustRollback := true
+
+	// Setup a defer function for rolling back the transaction. If
+	// mustRollback is true it means the call to fn failed and we
+	// need to rollback the transaction.
+	defer func() {
+		if mustRollback {
+			log.Infow("rollback tran", "traceid", traceID)
+			if err := tx.Rollback(); err != nil {
+				log.Errorw("unable to rollback tran", "traceid", traceID, "ERROR", err)
+			}
+		}
+	}()
+
+	// Execute the code inside of the transaction. If the function
+	// fails, return the error and the defer function will rollback.
+	if err := fn(tx); err != nil {
+		return fmt.Errorf("exec tran: %w", err)
+	}
+
+	// Disarm the deferred rollback.
+	mustRollback = false
+
+	// Commit the transaction.
+	log.Infow("commit tran", "traceid", traceID)
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit tran: %w", err)
+	}
+
+	return nil
+}
+
 // NamedExecContext is a helper function to execute a CUD operation with
 // logging and tracing.
 func NamedExecContext(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtContext, query string, data interface{}) error {
 	q := queryString(query, data)
 	log.Infow("database.NamedExecContext", "traceid", web.GetTraceID(ctx), "query", q)
 
-	if _, err := sqlx.NamedExecContext(ctx, db, query, data); err != nil {
+	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
+	span.SetAttributes(attribute.String("query", q))
+	defer span.End()
 
-		// Checks if the error is of code 23505 (unique_violation).
-		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == uniqueViolation {
-			return ErrDBDuplicatedEntry
-		}
+	if _, err := sqlx.NamedExecContext(ctx, db, query, data); err != nil {
 		return err
 	}
 
@@ -115,10 +160,14 @@ func NamedExecContext(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCo
 }
 
 // NamedQuerySlice is a helper function for executing queries that return a
-// collection of data to be unmarshalled into a slice.
+// collection of data to be unmarshaled into a slice.
 func NamedQuerySlice(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtContext, query string, data interface{}, dest interface{}) error {
 	q := queryString(query, data)
 	log.Infow("database.NamedQuerySlice", "traceid", web.GetTraceID(ctx), "query", q)
+
+	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
+	span.SetAttributes(attribute.String("query", q))
+	defer span.End()
 
 	val := reflect.ValueOf(dest)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
@@ -129,7 +178,6 @@ func NamedQuerySlice(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCon
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
 	slice := val.Elem()
 	for rows.Next() {
@@ -149,12 +197,14 @@ func NamedQueryStruct(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCo
 	q := queryString(query, data)
 	log.Infow("database.NamedQueryStruct", "traceid", web.GetTraceID(ctx), "query", q)
 
+	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
+	span.SetAttributes(attribute.String("query", q))
+	defer span.End()
+
 	rows, err := sqlx.NamedQueryContext(ctx, db, query, data)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
 	if !rows.Next() {
 		return ErrDBNotFound
 	}
