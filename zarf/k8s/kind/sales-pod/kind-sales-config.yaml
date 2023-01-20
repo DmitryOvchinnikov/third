@@ -3,3 +3,6 @@ kind: ConfigMap
 metadata:
   name: app-config
   namespace: sales-system
+data:
+  # This is the default but I want to show an example.
+  db_host: localhost

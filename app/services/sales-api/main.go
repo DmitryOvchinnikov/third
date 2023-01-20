@@ -137,7 +137,7 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("reading keys: %w", err)
 	}
 
-	auth, err := auth.New(cfg.Auth.ActiveKID, ks)
+	aut, err := auth.New(cfg.Auth.ActiveKID, ks)
 	if err != nil {
 		return fmt.Errorf("constructing auth: %w", err)
 	}
@@ -202,7 +202,7 @@ func run(log *zap.SugaredLogger) error {
 	apiMux := handlers.APIMux(handlers.APIMuxConfig{
 		Shutdown: shutdown,
 		Log:      log,
-		Auth:     auth,
+		Auth:     aut,
 		DB:       db,
 	})
 
