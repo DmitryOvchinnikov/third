@@ -20,8 +20,8 @@ import (
 
 // Set of error variables for CRUD operations.
 var (
-	// ErrDBNotFound ...
-	ErrDBNotFound = errors.New("not found")
+	ErrDBNotFound        = errors.New("not found")
+	ErrDBDuplicatedEntry = errors.New("duplicated entry")
 )
 
 // Config is the required properties to use the database.
