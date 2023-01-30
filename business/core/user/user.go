@@ -186,7 +186,7 @@ func (c Core) QueryByEmail(ctx context.Context, email string) (User, error) {
 }
 
 // Authenticate finds a user by their email and verifies their password. On
-// success it returns a Claims User representing this user. The claims can be
+// success, it returns a Claims User representing this user. The claims can be
 // used to generate a token for future authentication.
 func (c Core) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
 	dbUsr, err := c.store.QueryByEmail(ctx, email)
