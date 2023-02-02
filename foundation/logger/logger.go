@@ -1,3 +1,5 @@
+// Package logger provides a convenience function to constructing a logger
+// for use. This is required not just for applications but for testing.
 package logger
 
 import (
