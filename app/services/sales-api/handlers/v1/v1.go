@@ -5,8 +5,8 @@ package v1
 import (
 	"net/http"
 
-	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/testgrp"
-	"github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/usergrp"
+	v1TestGrp "github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/testgrp"
+	v1usergrp "github.com/dmitryovchinnikov/third/app/services/sales-api/handlers/v1/usergrp"
 	userCore "github.com/dmitryovchinnikov/third/business/core/user"
 	"github.com/dmitryovchinnikov/third/business/sys/auth"
 	"github.com/dmitryovchinnikov/third/business/web/v1/mid"
@@ -27,7 +27,7 @@ type Config struct {
 func Routes(app *web.App, cfg Config) {
 	const version = "v1"
 
-	tgh := testgrp.Handlers{
+	tgh := v1TestGrp.Handlers{
 		Log: cfg.Log,
 	}
 
@@ -38,7 +38,7 @@ func Routes(app *web.App, cfg Config) {
 	admin := mid.Authorize(auth.RoleAdmin)
 
 	// Register user management and authentication endpoints.
-	ugh := usergrp.Handlers{
+	ugh := v1usergrp.Handlers{
 		User: userCore.NewCore(cfg.Log, cfg.DB),
 		Auth: cfg.Auth,
 	}
