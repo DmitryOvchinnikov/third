@@ -105,32 +105,32 @@ func processCommands(args conf.Args, log *zap.SugaredLogger, dbConfig database.C
 			return fmt.Errorf("seeding database: %w", err)
 		}
 
-	//case "useradd":
-	//	name := args.Num(1)
-	//	email := args.Num(2)
-	//	password := args.Num(3)
-	//	if err := commands.UserAdd(log, dbConfig, name, email, password); err != nil {
-	//		return fmt.Errorf("adding user: %w", err)
-	//	}
+	case "useradd":
+		name := args.Num(1)
+		email := args.Num(2)
+		password := args.Num(3)
+		if err := commands.UserAdd(log, dbConfig, name, email, password); err != nil {
+			return fmt.Errorf("adding user: %w", err)
+		}
 
-	//case "users":
-	//	pageNumber := args.Num(1)
-	//	rowsPerPage := args.Num(2)
-	//	if err := commands.Users(log, dbConfig, pageNumber, rowsPerPage); err != nil {
-	//		return fmt.Errorf("getting users: %w", err)
-	//	}
+	case "users":
+		pageNumber := args.Num(1)
+		rowsPerPage := args.Num(2)
+		if err := commands.Users(log, dbConfig, pageNumber, rowsPerPage); err != nil {
+			return fmt.Errorf("getting users: %w", err)
+		}
 
-	//case "genkey":
-	//	if err := commands.GenKey(); err != nil {
-	//		return fmt.Errorf("key generation: %w", err)
-	//	}
-	//
-	//case "gentoken":
-	//	userID := args.Num(1)
-	//	kid := args.Num(2)
-	//	if err := commands.GenToken(log, dbConfig, userID, kid); err != nil {
-	//		return fmt.Errorf("generating token: %w", err)
-	//	}
+	case "genkey":
+		if err := commands.GenKey(); err != nil {
+			return fmt.Errorf("key generation: %w", err)
+		}
+
+	case "gentoken":
+		userID := args.Num(1)
+		kid := args.Num(2)
+		if err := commands.GenToken(log, dbConfig, userID, kid); err != nil {
+			return fmt.Errorf("generating token: %w", err)
+		}
 
 	default:
 		fmt.Println("migrate: create the schema in the database")
