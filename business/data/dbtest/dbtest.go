@@ -20,6 +20,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	dbUser "github.com/dmitryovchinnikov/third/business/core/user/db"
 )
 
 // Success and failure markers.
