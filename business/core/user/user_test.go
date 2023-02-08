@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmitryovchinnikov/third/business/core/user"
+	userCore "github.com/dmitryovchinnikov/third/business/core/user"
 	"github.com/dmitryovchinnikov/third/business/data/dbschema"
 	"github.com/dmitryovchinnikov/third/business/data/dbtest"
 	"github.com/dmitryovchinnikov/third/business/sys/auth"
@@ -34,7 +34,7 @@ func TestUser(t *testing.T) {
 	log, db, teardown := dbtest.NewUnit(t, c, "testuser")
 	t.Cleanup(teardown)
 
-	core := user.NewCore(log, db)
+	core := userCore.NewCore(log, db)
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -44,9 +44,9 @@ func TestUser(t *testing.T) {
 			ctx := context.Background()
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 
-			nu := user.NewUser{
-				Name:            "Bill Kennedy",
-				Email:           "bill@ardanlabs.com",
+			nu := userCore.NewUser{
+				Name:            "Dmitry Ovchinnikov",
+				Email:           "dmitry.v.vchinnikov@gmail.com",
 				Roles:           []string{auth.RoleAdmin},
 				Password:        "gophers",
 				PasswordConfirm: "gophers",
@@ -69,9 +69,9 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould get back the same user.", dbtest.Success, testID)
 
-			upd := user.UpdateUser{
-				Name:  dbtest.StringPointer("Jacob Walker"),
-				Email: dbtest.StringPointer("jacob@ardanlabs.com"),
+			upd := userCore.UpdateUser{
+				Name:  dbtest.StringPointer("Ovchinnikov Dmitry"),
+				Email: dbtest.StringPointer("dmitry.v.vchinnikov@icloud.com"),
 			}
 
 			if err := core.Update(ctx, usr.ID, upd, now); err != nil {
@@ -107,7 +107,7 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to delete user.", dbtest.Success, testID)
 
 			_, err = core.QueryByID(ctx, usr.ID)
-			if !errors.Is(err, user.ErrNotFound) {
+			if !errors.Is(err, userCore.ErrNotFound) {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve user : %s.", dbtest.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve user.", dbtest.Success, testID)
@@ -124,7 +124,7 @@ func TestPagingUser(t *testing.T) {
 
 	dbschema.Seed(ctx, db)
 
-	user := user.NewCore(log, db)
+	user := userCore.NewCore(log, db)
 
 	t.Log("Given the need to page through User records.")
 	{
