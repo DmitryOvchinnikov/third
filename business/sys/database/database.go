@@ -12,11 +12,14 @@ import (
 
 	"github.com/dmitryovchinnikov/third/foundation/web"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq" // Calls init function.
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
+
+// lib/pq errorCodeNames
+// https://github.com/lib/pq/blob/master/error.go#L178
+const uniqueViolation = "23505"
 
 // Set of error variables for CRUD operations.
 var (
@@ -127,6 +130,11 @@ func WithinTran(ctx context.Context, log *zap.SugaredLogger, db Transactor, fn f
 	// Execute the code inside the transaction. If the function
 	// fails, return the error and the defer function will rollback.
 	if err := fn(tx); err != nil {
+
+		// Checks if the error is of code 23505 (unique_violation).
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == uniqueViolation {
+			return ErrDBDuplicatedEntry
+		}
 		return fmt.Errorf("exec tran: %w", err)
 	}
 
@@ -148,11 +156,12 @@ func NamedExecContext(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCo
 	q := queryString(query, data)
 	log.Infow("database.NamedExecContext", "traceid", web.GetTraceID(ctx), "query", q)
 
-	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
-	span.SetAttributes(attribute.String("query", q))
-	defer span.End()
-
 	if _, err := sqlx.NamedExecContext(ctx, db, query, data); err != nil {
+
+		// Checks if the error is of code 23505 (unique_violation).
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == uniqueViolation {
+			return ErrDBDuplicatedEntry
+		}
 		return err
 	}
 
@@ -165,10 +174,6 @@ func NamedQuerySlice(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCon
 	q := queryString(query, data)
 	log.Infow("database.NamedQuerySlice", "traceid", web.GetTraceID(ctx), "query", q)
 
-	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
-	span.SetAttributes(attribute.String("query", q))
-	defer span.End()
-
 	val := reflect.ValueOf(dest)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
 		return errors.New("must provide a pointer to a slice")
@@ -178,6 +183,7 @@ func NamedQuerySlice(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCon
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	slice := val.Elem()
 	for rows.Next() {
@@ -197,14 +203,12 @@ func NamedQueryStruct(ctx context.Context, log *zap.SugaredLogger, db sqlx.ExtCo
 	q := queryString(query, data)
 	log.Infow("database.NamedQueryStruct", "traceid", web.GetTraceID(ctx), "query", q)
 
-	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
-	span.SetAttributes(attribute.String("query", q))
-	defer span.End()
-
 	rows, err := sqlx.NamedQueryContext(ctx, db, query, data)
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
 	if !rows.Next() {
 		return ErrDBNotFound
 	}
