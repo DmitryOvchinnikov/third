@@ -31,14 +31,14 @@ spec:
             cpu: "1000m" # Use 1 full core
         imagePullPolicy: Always
         env:
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: app-config
-                key: db_password
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_password
         ports:
-          - name: postgres
-            containerPort: 5432
+        - name: postgres
+          containerPort: 5432
         livenessProbe:
           exec:
             command:
